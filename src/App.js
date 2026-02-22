@@ -1,15 +1,15 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, doc, setDoc, collection, onSnapshot } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { 
-  Send, MapPin, Phone, FileText, Search, Clock, CheckCircle2, Truck, Package,
-  ArrowRight, Info, Loader2, Download, Eye, Lock, Unlock, User, Share2, 
-  ArrowLeftRight, X, ExternalLink, ShieldCheck, Globe
+  Send, MapPin, FileText, Clock, CheckCircle2, Truck, 
+  ArrowRight, Loader2, Download, Eye, Lock, Unlock, Share2, 
+  X, ShieldCheck, Globe
 } from 'lucide-react';
 
 // --- PRODUCTION CONFIGURATION ---
-// Replace the values below with your ACTUAL Firebase keys
+// Replace the values below with your ACTUAL Firebase keys from Firebase Console
 const firebaseConfig = {
   apiKey: "AIzaSyC7t7n8eIBgyWtymL8nEHqMjeQro22iXGs",
   authDomain: "letterjet-india.firebaseapp.com",
@@ -19,12 +19,10 @@ const firebaseConfig = {
   appId: "1:159520943563:web:06fe45dbba0b64e4525a4e",
   measurementId: "G-85H1HYKY6E"
 };
-
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Use a fixed string for your App ID to avoid "not defined" errors
 const PRODUCTION_APP_ID = 'letterjet-india-v1';
 
 const fileToBase64 = (file) => new Promise((resolve, reject) => {
@@ -34,7 +32,6 @@ const fileToBase64 = (file) => new Promise((resolve, reject) => {
   reader.onerror = (error) => reject(error);
 });
 
-// Components Moved Outside to prevent focus issues
 const Step1 = ({ formData, handleFileUpload, setStep }) => (
   <div className="max-w-2xl mx-auto bg-white p-8 rounded-2xl shadow-xl border border-slate-100 animate-in fade-in duration-500">
     <div className="mb-8 text-center">
@@ -66,7 +63,7 @@ const Step1 = ({ formData, handleFileUpload, setStep }) => (
   </div>
 );
 
-const Step2 = ({ formData, setFormData, handleSubmitRequest, setStep, loading }) => (
+const Step2 = ({ formData, setFormData, handleSubmitRequest, loading }) => (
   <form onSubmit={handleSubmitRequest} className="max-w-2xl mx-auto bg-white p-8 rounded-2xl shadow-xl border border-slate-100 animate-in slide-in-from-right duration-500">
     <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2"><MapPin className="text-orange-600" /> Dispatch Details</h2>
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -92,8 +89,7 @@ const Step2 = ({ formData, setFormData, handleSubmitRequest, setStep, loading })
       <p className="text-sm text-orange-800 leading-relaxed">Stored in your private <b>Firebase Vault</b> and unlocked after transit simulation.</p>
     </div>
     <div className="flex gap-4 mt-8">
-      <button type="button" onClick={() => setStep(1)} className="flex-1 py-4 border rounded-xl font-semibold text-slate-600">Back</button>
-      <button type="submit" className="flex-[2] bg-orange-600 text-white py-4 rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-orange-700 shadow-lg transition-all">{loading ? <Loader2 className="animate-spin" /> : 'Confirm & Save'}</button>
+      <button type="submit" className="w-full bg-orange-600 text-white py-4 rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-orange-700 shadow-lg transition-all">{loading ? <Loader2 className="animate-spin" /> : 'Confirm & Save'}</button>
     </div>
   </form>
 );
@@ -101,15 +97,18 @@ const Step2 = ({ formData, setFormData, handleSubmitRequest, setStep, loading })
 const HubView = ({ trackingInfo, onSimulateDelivery, isRecipientMode }) => {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const isDelivered = trackingInfo?.isDelivered;
+
   const handleDownload = () => { if (!trackingInfo?.pdfBase64) return; const link = document.createElement('a'); link.href = trackingInfo.pdfBase64; link.download = `letter-${trackingInfo.id}.pdf`; link.click(); };
+  
   const handleOpenNewTab = () => { if (!trackingInfo?.pdfBase64) return; const newTab = window.open(); if (newTab) { newTab.document.write(`<iframe src="${trackingInfo.pdfBase64}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`); } };
+  
   const shareLink = `${window.location.origin}${window.location.pathname}?docket=${trackingInfo?.id}`;
   
   return (
     <div className="max-w-3xl mx-auto animate-in fade-in duration-700 pb-10">
       {!isRecipientMode && !isDelivered && (
         <div className="mb-6 bg-slate-900 text-white p-4 rounded-2xl flex items-center justify-between text-xs border-l-4 border-orange-500 shadow-xl">
-          <div className="flex items-center gap-3"><ShieldCheck className="text-orange-500" /><span><b>Sender:</b> Click below to unlock the letter for testing immediately.</span></div>
+          <div className="flex items-center gap-3"><ShieldCheck className="text-orange-500" /><span><b>Sender:</b> Click below to unlock for testing immediately.</span></div>
           <button onClick={onSimulateDelivery} className="bg-white text-slate-900 px-4 py-2 rounded-xl font-bold hover:bg-orange-100 transition-all">Deliver Now</button>
         </div>
       )}
@@ -158,7 +157,6 @@ const HubView = ({ trackingInfo, onSimulateDelivery, isRecipientMode }) => {
   );
 };
 
-// --- Main App Logic ---
 const App = () => {
   const [user, setUser] = useState(null);
   const [step, setStep] = useState(1);
@@ -214,14 +212,14 @@ const App = () => {
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900 overflow-x-hidden">
       <nav className="bg-white/80 backdrop-blur-md border-b px-8 py-6 flex justify-between items-center sticky top-0 z-[60]">
-        <div className="flex items-center gap-4 cursor-pointer" onClick={() => (window.location.href = window.location.pathname)}>
-          <div className="bg-orange-600 p-3 rounded-[20px] text-white shadow-xl shadow-orange-200"><Send size={24} /></div>
+        <div className="flex items-center gap-4 cursor-pointer" onClick={() => (window.location.href = window.location.origin)}>
+          <div className="bg-orange-600 p-3 rounded-[20px] text-white shadow-xl shadow-orange-200 transition-transform hover:scale-110"><Send size={24} /></div>
           <h1 className="text-3xl font-black bg-gradient-to-br from-slate-900 to-orange-600 bg-clip-text text-transparent tracking-tighter">LetterJet</h1>
         </div>
       </nav>
       <main className="px-6 pt-16">
         {step === 1 && <Step1 formData={formData} handleFileUpload={handleFileUpload} setStep={setStep} />}
-        {step === 2 && <Step2 formData={formData} setFormData={setFormData} handleSubmitRequest={handleSubmitRequest} setStep={setStep} loading={loading} />}
+        {step === 2 && <Step2 formData={formData} setFormData={setFormData} handleSubmitRequest={handleSubmitRequest} loading={loading} />}
         {step === 3 && <HubView trackingInfo={trackingInfo} onSimulateDelivery={handleSimulateDelivery} isRecipientMode={isRecipientMode} />}
       </main>
     </div>
